@@ -3,11 +3,12 @@ import random
 from problem import Problem
 
 
-class Problem5(Problem):
+class ProblemABC(Problem):
     def __init__(self):
 
-        limit = random.randint(2, 30) #generam random numarul de elemente ale arborelui
+        limit = random.randint(5, 12) #generam random numarul de elemente ale arborelui
         data = [random.randint(0, 100) for _ in range(1, limit)] #generam random numerele 
+        data = list(set(data))
         rand = random.choice(data) #alegem un element random din lista
         data.append(rand) #punem rand ca ultimul element din data, urmand sa il separam
 
@@ -15,7 +16,7 @@ class Problem5(Problem):
         statement2 = '\n2. Scrieti nodurile care se pot sterge in doua moduri. '
         statement3 = '\n3. Stergeti elementul: ' + str(rand)
         
-        statement += str(data) + statement2 + statement3
+        statement += str(data[0:-1]) + statement2 + statement3
 
 
         super().__init__(statement, data)
@@ -34,12 +35,13 @@ class Problem5(Problem):
                 self.value = value
 
         SRD_list = list()
+        global tree
 
         def SRD(root):  #algoritm care afiseaza arborele in inordine
             if root:
                 SRD(root.left) #incepem in stanga, dupa afisam radacina, apoi mergem in dreapta
-                SRD(root.right) #punem toate valorile intr-o lista pe care o afisam la final
                 SRD_list.append(root.value) 
+                SRD(root.right) #punem toate valorile intr-o lista pe care o afisam la final
 
         RSD_list = list()
 
@@ -60,7 +62,7 @@ class Problem5(Problem):
                 root = node   #daca nu exista radacina, o facem noi
             SRD_list.clear()
             RSD_list.clear()
-            morechildren_list.clear() #golim listele, deoarece arborele s-a modificat
+            morechildren_list.clear()    #golim listele, deoarece arborele s-a modificat
 
             return root  #retrunam radacina, deoarece avem nevoie de referinta
 
@@ -119,22 +121,23 @@ class Problem5(Problem):
 
             if current and children(current) == 0: #cazul in care nodul nu are copii
                 
-                if current == root:  # daca e radacina, o stergem
+                if current.value == root.value:  # daca e radacina, o stergem
                     current = None
 
                 else:                               #cautam referinta nodului parinte la nod si o stergem
-                    if current_parent.left and current.value < current_parent.left.value:
+                    if current_parent.left and current.value == current_parent.left.value:
                         current_parent.left = None
                     else:
                         current_parent.right = None 
 
-            if current and children(current) == 1: #daca nodul are 1 copil
+            elif current and children(current) == 1: #daca nodul are 1 copil
 
-                if current == root:              #daca nodul e root, copilul sau va deveni root
+                if current.value == root.value:              #daca nodul e root, copilul sau va deveni root
                     if current.right:
-                        current = current.right
+                        root.value = current.right.value
                     else:
-                        current = current.left  
+                        root.value = current.left.value
+                    current = None
 
                 else:                                        
                     if current_parent.right == current:            #cautam referinta nodului parinte la nod
@@ -148,7 +151,7 @@ class Problem5(Problem):
                         else:
                             current_parent.left = current.left
 
-            if current and children(current) == 2:  #daca nodul are 2 copii
+            elif current and children(current) == 2:  #daca nodul are 2 copii
                 current_replacement = replacement(current)  #gasim nodul cu valoarea care poate fi pusa nodul nostru
                 temp = current_replacement.value
                 delete(root, current_replacement.value)#stergem nodul cu care am inlocuit(va fi ori frunza ori cu 1 copil)
@@ -156,7 +159,24 @@ class Problem5(Problem):
 
             SRD_list.clear()
             RSD_list.clear()
-            morechildren_list.clear()  #golim listele deoarece arborele s-a modificat
+            morechildren_list.clear() #golim listele deoarece arborele s-a modificat
+
+        tree = ''
+
+        def draw(root, space):
+            global tree
+            if root is None:
+                return None
+        
+            space += 5
+            draw(root.right, space)
+            tree += '\n'
+            tree += ' ' * space + str(root.value)
+            draw(root.left, space)
+            
+            
+            
+            
 
         r = Node(data[0]) #inseram radacina 
         for i in range(1, len(data)):
@@ -164,14 +184,12 @@ class Problem5(Problem):
 
         st0 = """\nIdee de rezolvare: Vom insera elemente in arbore folosind o functie prin recurenta care
         returneaza radacina arborelui, deoarece avem nevoie de referinta. Stergerea unui element se va face 
-        in functie de caz: daca are 0, 1 sau 2 copii. In primele 2 cazuri gasim parintele, cu ajutorul 
-        functiei parent, iar apoi mutam referinta nodului parintelui la None, respectiv la copilul 
-        nodului. In al treilea caz, cautam nodul cu care nodul nostru va fi inlocuit cu ajutorul 
-        functiei minValue(care ia cel mai mic nod din dreapta), punem valoarea in nodul curent, apoi
-        stergem nodul cu care am inlocuit. Elementele care pot fi sterse in 2 moduri sunt cele care au 2 copii,
-        iar acestea vor fi gasite cu ajutorul functiilor children(calculeaza numarul de copii) si morechildren
-        (gaseste nodurile care au 2 copii)"""
-             
+        in functie de caz: daca are 0, 1 sau 2 copii. In primele 2 cazuri gasim parintele, iar apoi mutam 
+        referinta nodului parintelui. In al treilea caz, cautam nodul cu care nodul nostru va fi inlocuit,
+        punem valoarea in nodul curent, apoi stergem nodul cu care am inlocuit. Elementele care pot fi sterse 
+        in 2 moduri sunt cele care au 2 copii, asa ca le vom afisa pe acelea."""
+        
+
             
 
         SRD(r)
@@ -179,6 +197,10 @@ class Problem5(Problem):
 
         RSD(r)
         st2 = "\nELementele arborelui in preordine sunt: " + str(RSD_list)
+
+        draw(r, -7)
+        st21 = tree
+        
 
         morechildren(r)
         st3 = "\nElementele care se pot sterge in 2 moduri sunt: " + str(morechildren_list)
@@ -188,11 +210,16 @@ class Problem5(Problem):
 
         RSD(r)
         st5 = "\nArborele, din care s-a sters " + str(rand) + ': ' + str(RSD_list)
+        tree = ''
+        draw(r,-7)
+        st51 = tree
 
-        solution = statement + st0 + st1 + st2 + st3 + st4 + st5
+        solution = st1 + st2 + st21 + st3 + st4 + st5 + st51
 
-        return solution
+        print(solution)
+
+        #return solution
 
 
-
-# returnez tot intr-o var solution + idee de rezolvare
+problem = ProblemABC()
+problem.solve()
